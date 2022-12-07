@@ -3,13 +3,10 @@ require("dotenv").config();
 const { Sequelize } = require("sequelize");
 const fs = require("fs");
 const path = require("path");
-const { PGUSER, PGPASSWORD, PGHOST, PGPORT, PGDATABASE } = process.env;
+const { DB_USER, DB_PASSWORD, DB_HOST } = process.env;
 
 const sequelize = new Sequelize(
-  `postgresql://postgres:iAj2K4zGPvjP3KncYR0Y@containers-us-west-160.railway.app:7928/railway`,
-
-  // postgres:Dkgg8MJnMdBtdJP9Crxj@containers-us-west-107.railway.app:6276/railway
-
+  `postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}/clothing-ecommerce`,
   {
     logging: false, // set to console.log to see the raw SQL queries
     native: false, // lets Sequelize know we can use pg-native for ~30% more speed
@@ -38,15 +35,19 @@ let capsEntries = entries.map((entry) => [
 ]);
 sequelize.models = Object.fromEntries(capsEntries);
 
-const { Order, Product, User } = sequelize.models;
+const { Order, Product, User, Cart } = sequelize.models;
 
 // Aca vendrian las relaciones
 
-User.belongsToMany(Product, { through: "Product_User" });
-Product.belongsToMany(User, { through: "Product_User" });
+//si ponemos productos favoritos, lo usamos
+/* User.belongsToMany(Product, { through: "Product_User" });
+Product.belongsToMany(User, { through: "Product_User" }); */
 
 User.hasMany(Order);
 Order.belongsTo(User);
+
+User.hasOne(Cart);
+Cart.belongsTo(User);
 
 module.exports = {
   ...sequelize.models, // para poder importar los modelos así: const { Product} = require('./db.js');
