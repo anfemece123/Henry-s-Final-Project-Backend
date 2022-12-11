@@ -4,7 +4,10 @@ const { Product } = require("../../db");
 const Test = require("../../../seeds.js");
 
 getAllProducts = async (req, res) => {
-  const allProducts = await Product.findAll();
+  const allProducts = await Product.findAll({
+    where: {},
+  });
+
   if (!allProducts.length) {
     try {
       const allProductsFromDb = await Product.bulkCreate(Test);
@@ -15,7 +18,9 @@ getAllProducts = async (req, res) => {
     }
   }
   try {
-    const allProducts = await Product.findAll();
+    const allProducts = await Product.findAll({
+      include: { all: true },
+    });
     res.status(200).send(allProducts);
   } catch (error) {
     console.log(error);
@@ -80,7 +85,10 @@ createNewProducts = async (req, res) => {
 getDetail = async (req, res) => {
   try {
     const { id } = req.params;
-    const productDetail = await Product.findByPk(id);
+    const productDetail = await Product.findByPk(id, {
+      include: { all: true },
+    });
+    console.log(productDetail);
     if (!productDetail) return res.status(400).send("Product Not Found");
     return res.status(200).send(productDetail);
   } catch (error) {
@@ -112,51 +120,27 @@ getByTitle = async (req, res) => {
 
 updateProduct = async (req, res) => {
   const { idProduct } = req.params;
-  const {
-    title,
-    brand,
-    category,
-    color,
-    season,
-    price,
-    isOnSale,
-    size,
-    gender,
-    stock,
-    image,
-  } = req.body;
+  const fieldsToChange = req.body;
+  const fieldsToUpdate = { ...fieldsToChange };
 
-  if (
-    !title ||
-    !category ||
-    !color ||
-    !season ||
-    !price ||
-    !size ||
-    !gender ||
-    !image
-  ) {
+  if (!Object.entries(fieldsToUpdate).length)
     return res.status(400).send("Missing Data");
+
+  if (Object.entries(fieldsToUpdate).length === 1) {
+    try {
+      const product = await Product.findOne({
+        where: { id: idProduct },
+      });
+      await product.update(fieldsToUpdate);
+      await product.save();
+      res.status(200).send("Product Successfully Updated");
+    } catch (error) {}
   }
   try {
     const product = await Product.findOne({
       where: { id: idProduct },
     });
-
-    product.set({
-      title,
-      brand,
-      category,
-      color,
-      season,
-      price,
-      isOnSale,
-      size,
-      gender,
-      stock,
-      image,
-    });
-
+    product.set(fieldsToUpdate);
     await product.save();
     res.status(200).send("Product Successfully Updated");
   } catch (error) {
@@ -171,7 +155,7 @@ deleteProduct = async (req, res) => {
       where: { id: idProduct },
     });
     await product.destroy();
-    res.status(200).send("User Succesfully Removed");
+    res.status(200).send(idProduct);
   } catch (error) {
     return res.status(404).send(error.message);
   }

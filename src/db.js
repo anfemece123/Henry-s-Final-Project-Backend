@@ -6,7 +6,7 @@ const path = require("path");
 const { DB_USER, DB_PASSWORD, DB_HOST } = process.env;
 
 const sequelize = new Sequelize(
-  `postgresql://postgres:iAj2K4zGPvjP3KncYR0Y@containers-us-west-160.railway.app:7928/railway`,
+  `postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}/clothing-ecommerce`,
   {
     logging: false, // set to console.log to see the raw SQL queries
     native: false, // lets Sequelize know we can use pg-native for ~30% more speed
@@ -35,7 +35,7 @@ let capsEntries = entries.map((entry) => [
 ]);
 sequelize.models = Object.fromEntries(capsEntries);
 
-const { Order, Product, User, Cart } = sequelize.models;
+const { Order, Product, User, Cart, Review } = sequelize.models;
 
 // Aca vendrian las relaciones
 
@@ -48,6 +48,12 @@ Order.belongsTo(User);
 
 User.hasOne(Cart);
 Cart.belongsTo(User);
+
+User.hasMany(Review);
+Review.belongsTo(User);
+
+Product.hasMany(Review);
+Review.belongsTo(Product);
 
 module.exports = {
   ...sequelize.models, // para poder importar los modelos así: const { Product} = require('./db.js');

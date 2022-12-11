@@ -6,19 +6,22 @@ let id = 1;
 
 //el usuario se desloguea y no confirma compra, por lo tanto se le crea un cart
 createCart = async (req, res) => {
-  const { products, products_quantity, total } = req.body;
-  const userId = req.UserId;
-  if (!products || !products_quantity || !total) {
+  const { products, quantity, total } = req.body;
+  const { idUser } = req.params;
+  if (!products || !quantity || !total) {
     return res.status(400).send("Missing Data");
   }
   try {
+    const cart = await Cart.findOne({ where: { UserId: idUser } });
+    cart && (await cart.destroy());
+
     const newCart = await Cart.create({
       id,
       products,
-      products_quantity,
+      products_quantity: quantity,
       total,
     });
-    await newCart.setUser(userId);
+    await newCart.setUser(idUser);
     res.status(201).send("Cart Succesfully Created");
     id++;
     return;
@@ -29,12 +32,10 @@ createCart = async (req, res) => {
 
 //cuando el usuario efectua la compra, el cart se tiene que borrar porque pasa a ser una order
 deleteCart = async (req, res) => {
-  const { idCart } = req.params;
+  const { idUser } = req.params;
   try {
-    const cart = await Cart.findOne({
-      where: { id: idCart },
-    });
-    await cart.destroy();
+    const cart = await Cart.findOne({ where: { UserId: idUser } });
+    cart && (await cart.destroy());
     res.status(200).send("Cart Succesfully Removed");
   } catch (error) {
     return res.status(404).send(error.message);
@@ -46,7 +47,6 @@ deleteCart = async (req, res) => {
 //pero se tiene que actualizar
 updateCart = async (req, res) => {
   const { id, products, products_quantity, total } = req.body;
-
   if (!products || !products_quantity || !total) {
     return res.status(400).send("Missing Data");
   }

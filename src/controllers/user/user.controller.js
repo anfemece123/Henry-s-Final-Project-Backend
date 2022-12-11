@@ -4,7 +4,7 @@ const { Cart } = require("../../db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("../../../nodemailer.config");
-let id = 1;
+/* let id = 1; */
 createNewUser = async (req, res) => {
   //Recibe los datos recolectados desde el formulario controlado por body de la ruta de registro de usuario
   //Crea un usuario en la base de datos, esta relacionado con las actividades creadas por el mismo.
@@ -42,7 +42,7 @@ createNewUser = async (req, res) => {
       );
       const passwordHashed = await bcrypt.hash(password, 10 /* saltRounds */);
       await User.create({
-        id,
+        // id,
         first_name,
         last_name,
         email,
@@ -61,62 +61,63 @@ createNewUser = async (req, res) => {
       newUser.passwordHashed = password;
       nodemailer.sendConfirmationEmail(first_name, email, token);
       res.status(201).send(newUser);
-      id++;
+      //id++;
       return;
     }
     return res.status(400).send("User Already Exists");
   } catch (error) {
-    console.error(error);
     return res.status(404).send(error);
   }
 };
 
 updateUser = async (req, res) => {
   const { id } = req.params;
-  const {
-    first_name,
-    last_name,
-    email,
-    password,
-    phoneNumber,
-    address,
-    profileImage,
-    isAdmin,
-  } = req.body;
+  const fieldsToChange = req.body;
+  const fieldsToUpdate = { ...fieldsToChange };
 
-  if (
-    !first_name ||
-    !last_name ||
-    !email ||
-    !password ||
-    !phoneNumber ||
-    !address ||
-    !profileImage ||
-    !isAdmin
-  ) {
+  if (!Object.entries(fieldsToUpdate).length)
     return res.status(400).send("Missing Data");
-  }
 
+  if (Object.entries(fieldsToUpdate).length === 1) {
+    try {
+      const user = await User.findOne({
+        where: { id },
+      });
+      if (fieldsToUpdate.hasOwnProperty("password")) {
+        const passwordHashed = await bcrypt.hash(
+          fieldsToUpdate.password,
+          10 /* saltRounds */
+        );
+        await user.update({ passwordHashed });
+        await user.save();
+      } else {
+        await user.update(fieldsToUpdate);
+        await user.save();
+      }
+      res.status(200).send("User Successfully Updated");
+    } catch (error) {
+      return res.status(404).send(error.message);
+    }
+  }
   try {
     const user = await User.findOne({
       where: { id },
     });
-
-    const passwordHashed = await bcrypt.hash(password, 10 /* saltRounds */);
-
-    user.set({
-      first_name,
-      last_name,
-      email,
-      passwordHashed,
-      phoneNumber,
-      address,
-      profileImage,
-      isAdmin,
-      isBanned: false,
-    });
-    await user.save();
-    res.status(200).send("User Successfully Updated");
+    if (fieldsToUpdate.hasOwnProperty("password")) {
+      const passwordHashed = await bcrypt.hash(
+        fieldsToUpdate.password,
+        10 /* saltRounds */
+      );
+      fieldsToUpdate["passwordHashed"] = fieldsToUpdate["password"];
+      fieldsToUpdate["passwordHashed"] = passwordHashed;
+      await user.set(fieldsToUpdate);
+      await user.save();
+      res.status(200).send("User Successfully Updated");
+    } else {
+      await user.set(fieldsToUpdate);
+      await user.save();
+      res.status(200).send();
+    }
   } catch (error) {
     return res.status(404).send(error.message);
   }
@@ -125,7 +126,7 @@ updateUser = async (req, res) => {
 getUserDetail = async (req, res) => {
   try {
     const { id } = req.params;
-    const userDetail = await User.findOne({ where: { id } });
+    const userDetail = await User.findByPk(id, { include: { all: true } });
     if (!userDetail) return res.status(400).send("User Not Found");
     return res.status(200).send(userDetail);
   } catch (error) {
@@ -139,20 +140,20 @@ getAllUsers = async (req, res) => {
     if (!allUsers) return res.status(400).send("User Not Found");
     return res.status(200).send(allUsers);
   } catch (error) {
-    console.log(error);
     return res.status(404).send(error);
   }
 };
 //LOGICAL ERASING
 deleteUser = async (req, res) => {
-  const { id } = req.params; // en realidad lo voy a recibir de req.userId cuando conecte el middleware
+  const { id } = req.params;
   try {
     const user = await User.findOne({
       where: { id },
     });
     await user.update({ isBanned: true });
     await user.save();
-    res.status(200).send("User Succesfully Banned");
+    nodemailer.sendUserBannedEmail(user.first_name, user.last_name, user.email);
+    res.status(200).send(id);
   } catch (error) {
     return res.status(404).send(error.message);
   }
