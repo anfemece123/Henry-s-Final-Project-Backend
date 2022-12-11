@@ -5,9 +5,10 @@ const nodemailer = require("../../../nodemailer.config");
 
 let id = 1;
 createOrder = async (req, res) => {
-  const { products, products_quantity, total, status } = req.body;
+  const { products, products_quantity, total } = req.body;
   const userId = req.UserId;
-  if (!products || !products_quantity || !total || !status) {
+  console.log("products:", products);
+  if (!products || !products_quantity || !total) {
     return res.status(400).send("Missing Data");
   }
   try {
@@ -16,7 +17,7 @@ createOrder = async (req, res) => {
       products,
       products_quantity,
       total,
-      status,
+      status: "pending",
     });
     await newOrder.setUser(userId);
 
@@ -38,6 +39,7 @@ createOrder = async (req, res) => {
     id++;
     return;
   } catch (error) {
+    console.log(error);
     return res.status(404).send(error.message);
   }
 };

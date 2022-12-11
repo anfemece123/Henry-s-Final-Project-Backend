@@ -1,0 +1,6 @@
+PUT http://localhost:3001/user/update/1
+Content-Type: application/json
+
+{
+  "isBanned": false
+}
