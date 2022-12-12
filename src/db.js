@@ -7,7 +7,7 @@ const { PGUSER, PGPASSWORD, PGHOST, PGPORT, PGDATABASE } = process.env;
 
 const sequelize = new Sequelize(
 
-  `postgresql://postgres:iAj2K4zGPvjP3KncYR0Y@containers-us-west-160.railway.app:7928/railway`,
+  `postgres:iAj2K4zGPvjP3KncYR0Y@containers-us-west-160.railway.app:7928/railway`,
 
   {
     logging: false, // set to console.log to see the raw SQL queries
