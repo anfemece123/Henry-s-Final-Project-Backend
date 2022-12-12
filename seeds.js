@@ -362,7 +362,7 @@ const products = [
     category: "shoes",
     color: "red",
     brand: "fila",
-    season: "vans",
+    season: "summer",
     stock: 5,
     price: 80.0,
     size: "M",
