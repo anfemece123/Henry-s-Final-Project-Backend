@@ -6,9 +6,7 @@ const path = require("path");
 const { PGUSER, PGPASSWORD, PGHOST, PGPORT, PGDATABASE } = process.env;
 
 const sequelize = new Sequelize(
-  `postgresql://${{ PGUSER }}:${{ PGPASSWORD }}@${{ PGHOST }}:${{ PGPORT }}/${{
-    PGDATABASE,
-  }}`,
+  `postgresql://postgres:iAj2K4zGPvjP3KncYR0Y@containers-us-west-160.railway.app:7928/railway`,
   {
     logging: false, // set to console.log to see the raw SQL queries
     native: false, // lets Sequelize know we can use pg-native for ~30% more speed
