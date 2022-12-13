@@ -80,7 +80,20 @@ logInGoogle = async (req, res) => {
   const userAux = jwt_decode(credentials);
   const password = userAux.jti;
   const passwordHashed = await bcrypt.hash(password, 10 /* saltRounds */);
-  console.log("userAux", userAux);
+
+  try {
+    const email = userAux.email;
+    const googleUser = await User.findOne({
+      where: { email },
+    });
+    if (googleUser && googleUser.isBanned) {
+      return res
+        .status(403 /* Forbidden */)
+        .send("Your Account Is Banned, Contact With The Company");
+    }
+  } catch (error) {
+    return res.status(404).send(error.message);
+  }
 
   try {
     const email = userAux.email;
