@@ -777,5 +777,6 @@ const products = [
     image:
       "https://img.joomcdn.net/1abcdec7e5cfd368658a3c47506be5855b2887a3_original.jpeg",
   },
+  
 ];
 module.exports = products;
